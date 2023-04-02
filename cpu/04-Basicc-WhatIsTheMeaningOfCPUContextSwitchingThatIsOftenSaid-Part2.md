@@ -148,7 +148,7 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  8  0      0 6487428 118240 1292772    0    0     0     0 10191 1392312 16 84  0  0  0
 ```
 
-You should notice that the number of context switches `in` the `cs` column has
+You should notice that the number of context switches in the `cs` column has
 jumped from 35 to 1.39 million. At the same time, pay attention to observe several other indicators:
 
 - Column `r`: The length of the ready queue has reached 8, far exceeding the number of CPUs in the system 2, so there must be a lot of CPU competition.
