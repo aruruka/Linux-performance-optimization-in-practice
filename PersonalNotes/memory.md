@@ -23,3 +23,26 @@ For example, you can run the following command to calculate:
 $ grep Pss /proc/[1-9]*/smaps | awk '{total+=$2}; END {printf "%d kB\n", total }'
 391266 kB
 ```
+
+## Is there was a way to see the buffer/cache of each process?
+
+I'm recently learning Linux performance analysis. There is a case study regarding buffer and cache in memory, and it got me thinking about the question of how Hadoop or MapR FS accesses disks and maintains their buffer/cache as a file system themselves.
+So I wondered if there was a way to see the buffer/cache of each process from the OS level, but according to 🔗[this StackOverflow post](https://lnkd.in/g7bMtRUr), the buffer/cache doesn't belong to the process but to the kernel.
+I later rediscovered these sentences in 🔗[this article](https://lnkd.in/gUET59Mc) I had studied:
+
+> Avoid double counting the memory occupied by multiple processes simultaneously, such as page cache, shared memory, and so on.
+> If you add up the data from ps and top directly, you will have a double-counting problem.
+
+For example, if you add up the RES of the processes output by `top`, it will normally be greater than the total DRAM.
+So, this also confirms that the above StackOverflow post is correct, i.e. the buffer/cache is shared by multiple processes.
+
+So, for Hadoop, it seems that people always need to pre-format the disks as some kind of file system (ext3, xfs, etc.), hence Hadoop shouldn't use direct I/O to manipulate the disks(but maybe using RAW I/O).
+So, it is more likely that the Hadoop file system calls the OS system calls without direct I/O to access the disks and therefore creates a buffer/cache.
+
+On the other hand, MapR FS handles raw devices so I think it uses direct I/O to manipulate the disks. Naturally, it doesn't necessarily use system calls with cached I/O to read from and write to the disks, just like most database systems.
+(As far as I know, Oracle uses direct I/O to manipulate disks.)
+So MapR FS should be maintaining its own buffer/cache system inside itself, and the buffer/cache data may be stored inside the heap within its virtual memory.
+
+Besides, for a distributed file system, it is quite possible to maintain an efficient caching system (similar to Redis) within itself.
+
+BTW, direct I/O is skipping buffer/cache, raw I/O is skipping the file system (which still has a buffer).
